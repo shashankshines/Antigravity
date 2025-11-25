@@ -12,7 +12,7 @@ if sys.version_info < (3, 10):
 from email_agent import EmailAgent
 import os
 
-st.set_page_config(page_title="AI Email Agent", page_icon="email_logo_rounded.png", layout="wide")
+st.set_page_config(page_title="AI Email Agent", page_icon="favicon.png", layout="wide")
 
 # --- PERSISTENCE LOGIC ---
 if "keys_to_persist" not in st.session_state:
@@ -35,7 +35,7 @@ def get_persisted_value(key, default=""):
 
 # --- THEME SELECTION ---
 with st.sidebar:
-    st.image("email_logo_rounded.png", width=100)
+    st.image("logo.png", width=140)
     st.header("⚙️ Settings")
     
     theme_val = get_persisted_value("theme", "Light")
@@ -341,16 +341,9 @@ with st.sidebar:
     if not api_key:
         st.warning("Please enter your Gemini API Key.")
     
-    st.divider()
     
-    # Email Mode
-    mode_val = get_persisted_value("mode", "Mock (Safe)")
-    mode_index = 0
-    if mode_val == "Real SMTP":
-        mode_index = 1
-    
-    mode = st.radio("Sending Mode", ["Mock (Safe)", "Real SMTP"], index=mode_index, key="mode")
-    mock_mode = (mode == "Mock (Safe)")
+    # Always use Real SMTP mode
+    mock_mode = False
     
     # Signature
     st.divider()
@@ -359,77 +352,66 @@ with st.sidebar:
     sig_val = get_persisted_value("signature", "Best regards,\n[Your Name]")
     signature = st.text_area("Email Signature", value=sig_val, height=100, key="signature")
     
-    # Initialize SMTP variables to defaults to avoid NameError if mock_mode is True
-    smtp_server = ""
-    smtp_port = 587
-    smtp_email = ""
     
-    smtp_settings = {}
-    if not mock_mode:
-        st.subheader("SMTP Configuration")
+    st.divider()
+    st.subheader("📧 SMTP Configuration")
+    
+    # SMTP Defaults
+    srv_val = get_persisted_value("smtp_server", "smtp.gmail.com")
+    port_val = int(get_persisted_value("smtp_port", 587))
+    email_val = get_persisted_value("smtp_email", "")
+    
+    smtp_server = st.text_input("SMTP Server", value=srv_val, key="smtp_server")
+    smtp_port = st.number_input("SMTP Port", value=port_val, key="smtp_port")
+    smtp_email = st.text_input("Sender Email", value=email_val, key="smtp_email")
+    smtp_password = st.text_input("App Password", type="password", key="smtp_password") # Never persist password
+    
+    # Sanitize inputs
+    if smtp_server: smtp_server = smtp_server.strip().replace('\xa0', '')
+    if smtp_email: smtp_email = smtp_email.strip().replace('\xa0', '')
+    if smtp_password: smtp_password = smtp_password.strip().replace('\xa0', '')
+    
+    if smtp_server and smtp_port and smtp_email and smtp_password:
+        smtp_settings = {
+            "server": smtp_server,
+            "port": int(smtp_port),
+            "email": smtp_email,
+            "password": smtp_password
+        }
         
-        # SMTP Defaults
-        srv_val = get_persisted_value("smtp_server", "smtp.gmail.com")
-        port_val = int(get_persisted_value("smtp_port", 587))
-        email_val = get_persisted_value("smtp_email", "")
-        
-        smtp_server = st.text_input("SMTP Server", value=srv_val, key="smtp_server")
-        smtp_port = st.number_input("SMTP Port", value=port_val, key="smtp_port")
-        smtp_email = st.text_input("Sender Email", value=email_val, key="smtp_email")
-        smtp_password = st.text_input("App Password", type="password", key="smtp_password") # Never persist password
-        
-        # Sanitize inputs
-        if smtp_server: smtp_server = smtp_server.strip().replace('\xa0', '')
-        if smtp_email: smtp_email = smtp_email.strip().replace('\xa0', '')
-        if smtp_password: smtp_password = smtp_password.strip().replace('\xa0', '')
-        
-        if smtp_server and smtp_port and smtp_email and smtp_password:
-            smtp_settings = {
-                "server": smtp_server,
-                "port": int(smtp_port),
-                "email": smtp_email,
-                "password": smtp_password
-            }
-            
-            if st.button("🔗 Connect mail"):
-                with st.spinner("Testing SMTP Connection..."):
-                    try:
-                        import smtplib
-                        server = smtplib.SMTP(smtp_settings['server'], smtp_settings['port'])
-                        server.starttls()
-                        server.login(smtp_settings['email'], smtp_settings['password'])
-                        server.quit()
-                        st.success("✅ Connected successfully!")
-                    except Exception as e:
-                        st.error(f"❌ Connection failed: {e}")
-        else:
-            st.warning("Please fill all SMTP details.")
+        if st.button("🔗 Connect mail"):
+            with st.spinner("Testing SMTP Connection..."):
+                try:
+                    import smtplib
+                    server = smtplib.SMTP(smtp_settings['server'], smtp_settings['port'])
+                    server.starttls()
+                    server.login(smtp_settings['email'], smtp_settings['password'])
+                    server.quit()
+                    st.success("✅ Connected successfully!")
+                except Exception as e:
+                    st.error(f"❌ Connection failed: {e}")
+    else:
+        st.warning("Please fill all SMTP details.")
 
     # Update Query Params (Sync state to URL)
-    # This ensures that whenever any input changes (triggering rerun), the URL is updated
     st.query_params["api_key"] = api_key
-    st.query_params["mode"] = mode
     st.query_params["signature"] = signature
-    if not mock_mode:
-        st.query_params["smtp_server"] = smtp_server
-        st.query_params["smtp_port"] = str(smtp_port)
-        st.query_params["smtp_email"] = smtp_email
+    st.query_params["smtp_server"] = smtp_server
+    st.query_params["smtp_port"] = str(smtp_port)
+    st.query_params["smtp_email"] = smtp_email
 
-# Initialize Agent
 # Initialize Agent
 if api_key:
     # Re-initialize if key changes or first run
-    # We check against the widget values directly
-    if 'agent' not in st.session_state or st.session_state.get('last_api_key') != api_key or st.session_state.get('last_mock_mode') != mock_mode:
-        st.session_state.agent = EmailAgent(api_key=api_key, mock_mode=mock_mode)
+    if 'agent' not in st.session_state or st.session_state.get('last_api_key') != api_key:
+        st.session_state.agent = EmailAgent(api_key=api_key, mock_mode=False)
         st.session_state.last_api_key = api_key
-        st.session_state.last_mock_mode = mock_mode
 elif 'agent' not in st.session_state:
-     st.session_state.agent = EmailAgent(mock_mode=True) # Fallback
+     st.session_state.agent = EmailAgent(mock_mode=False) # Fallback
 
-col1, col2 = st.columns([1, 15])
+col1, col2 = st.columns([1, 8], vertical_alignment="center")
 with col1:
-    st.image("email_logo_rounded.png", width=60)
+    st.image("logo.png", width=100)
 with col2:
     st.title("Auto-Gen email")
 
@@ -671,8 +653,6 @@ if 'generated_email' in st.session_state:
             status_placeholder.empty()
             st.toast("✅ Email sent successfully!", icon="✅")
             st.success(f"Email sent to {to_email}!")
-            if st.session_state.agent.mock_mode:
-                st.info("Mock Mode: Email printed to console/logs.")
         else:
             st.toast("❌ Failed to send email.", icon="❌")
             st.error("Failed to send email. Check your SMTP settings.")
