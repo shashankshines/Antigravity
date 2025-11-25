@@ -17,7 +17,7 @@ echo "📦 Copying application files..."
 cp app.py $STAGING_DIR/
 cp email_agent.py $STAGING_DIR/
 cp requirements.txt $STAGING_DIR/
-cp email_icon.png $STAGING_DIR/
+cp email_logo_rounded.png $STAGING_DIR/
 # Copy .env if it exists
 if [ -f .env ]; then
     cp .env $STAGING_DIR/

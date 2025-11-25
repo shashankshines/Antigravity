@@ -1,0 +1,7 @@
+staging_build/
+staging.log
+staging.pid
+__pycache__/
+*.pyc
+.env
+.DS_Store
