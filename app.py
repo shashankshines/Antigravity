@@ -444,39 +444,32 @@ with st.container():
     # Sync to_email to query params
     st.query_params["to_email"] = to_email
     
-    # Subject Templates
-    templates = {
-        "Custom": "",
-        "Job Application": "Application for [Position] - [Your Name]",
-        "Follow Up": "Following up on [Topic]",
-        "Meeting Request": "Request for Meeting: [Topic]",
-        "Invoice": "Invoice #[Number] for [Service]",
-        "Sick Leave": "Sick Leave Application - [Date]"
-    }
+    # Subject Templates - DISABLED
+    # templates = {
+    #     "Custom": "",
+    #     "Job Application": "Application for [Position] - [Your Name]",
+    #     "Follow Up": "Following up on [Topic]",
+    #     "Meeting Request": "Request for Meeting: [Topic]",
+    #     "Invoice": "Invoice #[Number] for [Service]",
+    #     "Sick Leave": "Sick Leave Application - [Date]"
+    # }
     
-    col_temp, col_subj = st.columns([1, 2])
-    with col_temp:
-        selected_template = st.selectbox("Quick Templates", list(templates.keys()))
+    # col_temp, col_subj = st.columns([1, 2])
+    # with col_temp:
+    #     selected_template = st.selectbox("Quick Templates", list(templates.keys()))
     
     # Determine default subject value
-    default_subject = ""
-    if selected_template != "Custom":
-        default_subject = templates[selected_template]
+    # default_subject = ""
+    # if selected_template != "Custom":
+    #     default_subject = templates[selected_template]
     
-    with col_subj:
-        # We use a key based on template to force update if template changes, 
-        # but we also want to allow manual editing.
-        # Streamlit trick: use session state to manage the value
-        if "subject_val" not in st.session_state:
-            st.session_state.subject_val = ""
-        
-        if selected_template != "Custom" and st.session_state.get("last_template") != selected_template:
-            st.session_state.subject_val = templates[selected_template]
-            st.session_state.last_template = selected_template
-            
-        subject = st.text_input("Subject", value=st.session_state.subject_val, key="subject_input")
-        # Sync back to session state for manual edits
-        st.session_state.subject_val = subject
+    # Simple subject input without templates
+    if "subject_val" not in st.session_state:
+        st.session_state.subject_val = ""
+    
+    subject = st.text_input("Subject", value=st.session_state.subject_val, key="subject_input", placeholder="Enter email subject")
+    # Sync back to session state for manual edits
+    st.session_state.subject_val = subject
 
     # Subject Optimization / Reverse Flow
     # Disable button until body text is generated
