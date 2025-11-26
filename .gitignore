@@ -45,3 +45,4 @@ Thumbs.db
 
 # Streamlit
 .streamlit/secrets.toml
+contacts.json

@@ -11,6 +11,7 @@ if sys.version_info < (3, 10):
         pass
 from email_agent import EmailAgent
 import os
+import contact_manager
 
 st.set_page_config(page_title="AI Email Agent", page_icon="favicon.png", layout="wide")
 
@@ -400,6 +401,24 @@ with st.sidebar:
     st.query_params["smtp_port"] = str(smtp_port)
     st.query_params["smtp_email"] = smtp_email
 
+    # Manage Contacts
+    st.divider()
+    with st.expander("👥 Manage Contacts"):
+        with st.form("add_contact_form"):
+            new_name = st.text_input("Name", placeholder="John Doe")
+            new_email = st.text_input("Email", placeholder="john@example.com")
+            submitted = st.form_submit_button("Add Contact")
+            if submitted:
+                if new_name and new_email:
+                    success, msg = contact_manager.add_contact(new_name, new_email)
+                    if success:
+                        st.success(msg)
+                        st.rerun()
+                    else:
+                        st.error(msg)
+                else:
+                    st.warning("Name and Email required.")
+
 # Initialize Agent
 if api_key:
     # Re-initialize if key changes or first run
@@ -420,11 +439,47 @@ st.markdown("Generate and send professional looking emails with Auto-Gen email."
 # Input Section
 with st.container():
     st.subheader("Email Details")
-    to_val = get_persisted_value("to_email", "")
-    to_email = st.text_input("Recipient Email", value=to_val, placeholder="e.g., boss@company.com", key="to_email")
+    # Contact Search / Manual Entry
+    use_contacts = st.toggle("Search Contacts", value=True, key="use_contacts_toggle")
+    
+    to_email = ""
+    if use_contacts:
+        contacts = contact_manager.load_contacts()
+        if contacts:
+            # Create options map: "Name <email>" -> email
+            contact_options = {f"{c['name']} <{c['email']}>": c['email'] for c in contacts}
+            
+            # Helper to find index of persisted value if it exists in contacts
+            persisted_to = get_persisted_value("to_email", "")
+            default_index = None
+            
+            # Try to match persisted email to an option
+            for i, email in enumerate(contact_options.values()):
+                if email == persisted_to:
+                    default_index = i
+                    break
+            
+            selected_contact_key = st.selectbox(
+                "Select Recipient", 
+                options=list(contact_options.keys()),
+                index=default_index,
+                placeholder="Type to search...",
+                key="contact_selectbox"
+            )
+            
+            if selected_contact_key:
+                to_email = contact_options[selected_contact_key]
+        else:
+            st.info("No contacts found. Add some in the sidebar settings.")
+            to_val = get_persisted_value("to_email", "")
+            to_email = st.text_input("Recipient Email", value=to_val, placeholder="e.g., boss@company.com", key="to_email_manual_fallback")
+    else:
+        to_val = get_persisted_value("to_email", "")
+        to_email = st.text_input("Recipient Email", value=to_val, placeholder="e.g., boss@company.com", key="to_email_manual")
     
     # Sync to_email to query params
-    st.query_params["to_email"] = to_email
+    if to_email:
+        st.query_params["to_email"] = to_email
     
     # Subject Templates - DISABLED
     # templates = {
