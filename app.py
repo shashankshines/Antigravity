@@ -11,7 +11,7 @@ if sys.version_info < (3, 10):
         pass
 from email_agent import EmailAgent
 import os
-import contact_manager
+
 
 st.set_page_config(page_title="AI Email Agent", page_icon="favicon.png", layout="wide")
 
@@ -53,6 +53,9 @@ if theme == "Dark":
         --accent-color: #0a84ff;
         --border-color: #3a3a3c;
         --input-bg: #1c1c1e;
+        --button-bg: #3a3a3c;
+        --button-border: #48484a;
+        --button-hover: #48484a;
         --shadow-sm: 0 1px 2px rgba(0,0,0,0.5);
         --shadow-md: 0 4px 6px rgba(0,0,0,0.3);
     """
@@ -64,6 +67,9 @@ else:
         --accent-color: #007aff;
         --border-color: #d2d2d7;
         --input-bg: #ffffff;
+        --button-bg: #ffffff;
+        --button-border: #d2d2d7;
+        --button-hover: #f5f5f7;
         --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
         --shadow-md: 0 4px 6px rgba(0,0,0,0.05);
     """
@@ -91,6 +97,20 @@ st.markdown(f"""
         border-right: 1px solid var(--border-color);
     }}
     
+    [data-testid="stSidebar"] label {{
+        color: var(--text-color) !important;
+    }}
+    
+    [data-testid="stSidebar"] p {{
+        color: var(--text-color) !important;
+    }}
+    
+    [data-testid="stSidebar"] h1,
+    [data-testid="stSidebar"] h2,
+    [data-testid="stSidebar"] h3 {{
+        color: var(--text-color) !important;
+    }}
+    
     /* Typography */
     h1, h2, h3, h4, h5, h6 {{
         font-family: 'Roboto', sans-serif !important;
@@ -104,7 +124,7 @@ st.markdown(f"""
         font-size: 2.0rem !important;
     }}
     
-    p, div, label, span {{
+    p, label {{
         font-family: 'Roboto', sans-serif;
         color: var(--text-color);
     }}
@@ -196,27 +216,67 @@ st.markdown(f"""
         color: var(--text-color) !important;
         opacity: 0.5 !important;
     }}
+    
+    /* Number Input */
+    .stNumberInput > div > div > input {{
+        background-color: var(--input-bg) !important;
+        color: var(--text-color) !important;
+        border: 1px solid var(--border-color) !important;
+        border-radius: 6px !important;
+    }}
+    
+    /* Radio Buttons */
+    .stRadio > div {{
+        color: var(--text-color) !important;
+    }}
+    
+    .stRadio label {{
+        color: var(--text-color) !important;
+    }}
+    
+    /* Warnings and Info boxes */
+    .stAlert {{
+        color: var(--text-color) !important;
+    }}
+    
+    /* Success/Error/Warning/Info messages */
+    [data-testid="stNotification"] {{
+        background-color: var(--sidebar-bg) !important;
+        border: 1px solid var(--border-color) !important;
+    }}
+    
+    /* Expander */
+    [data-testid="stExpander"] {{
+        background-color: var(--input-bg) !important;
+        border: 1px solid var(--border-color) !important;
+    }}
+    
+    [data-testid="stExpander"] summary {{
+        color: var(--text-color) !important;
+    }}
 
     /* Buttons - macOS Push Button Style */
     .stButton > button {{
-        background-color: var(--input-bg) !important;
-        border: 1px solid var(--border-color) !important;
+        background: var(--button-bg) !important;
+        border: 1px solid var(--button-border) !important;
         color: var(--text-color) !important;
         border-radius: 6px !important;
         font-weight: 500 !important;
         padding: 0.4rem 1rem !important;
-        box-shadow: 0 1px 1px rgba(0,0,0,0.05) !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.3) !important;
         transition: all 0.1s ease;
     }}
 
     .stButton > button:hover {{
-        background-color: var(--sidebar-bg) !important;
-        border-color: #8e8e93 !important;
+        background: var(--button-hover) !important;
+        border-color: var(--accent-color) !important;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.4) !important;
     }}
     
     .stButton > button:active {{
         background-color: var(--border-color) !important;
         transform: scale(0.98);
+        box-shadow: 0 1px 2px rgba(0,0,0,0.2) !important;
     }}
 
     /* Disabled Button Styling */
@@ -253,6 +313,7 @@ st.markdown(f"""
         border-radius: 0 0 8px 8px;
         color: var(--text-color);
         font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        min-height: 200px !important;
     }}
     
     /* Dividers */
@@ -265,18 +326,23 @@ st.markdown(f"""
         background-color: var(--input-bg) !important;
         border: 1px solid var(--border-color) !important;
         border-radius: 8px !important;
-        padding: 1rem !important;
+        padding: 0.5rem !important;
     }}
     
     [data-testid="stFileUploader"] label {{
         color: var(--text-color) !important;
         font-weight: 500 !important;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
     }}
     
     [data-testid="stFileUploader"] section {{
         background-color: var(--input-bg) !important;
         border: 2px dashed var(--border-color) !important;
         border-radius: 6px !important;
+        padding: 0.5rem !important;
+        min-height: 0px !important;
     }}
     
     [data-testid="stFileUploader"] section:hover {{
@@ -287,6 +353,24 @@ st.markdown(f"""
     [data-testid="stFileUploader"] small {{
         color: var(--text-color) !important;
         opacity: 0.7 !important;
+    }}
+    
+    /* File Uploader Drag Area Text/Icon Alignment */
+    [data-testid="stFileUploader"] section > div {{
+        display: flex !important;
+        flex-direction: row !important;
+        align-items: center !important;
+        justify-content: center !important;
+        gap: 0.5rem !important;
+    }}
+    
+    [data-testid="stFileUploader"] section svg {{
+        vertical-align: middle !important;
+        margin-top: -2px !important;
+    }}
+    
+    [data-testid="stFileUploader"] section span {{
+        color: var(--text-color) !important;
     }}
     
     /* File Upload Button */
@@ -380,7 +464,7 @@ with st.sidebar:
             "password": smtp_password
         }
         
-        if st.button("🔗 Connect mail"):
+        if st.button("🔗 Connect mail", help="Tests the SMTP connection for sending emails. Does not import contacts."):
             with st.spinner("Testing SMTP Connection..."):
                 try:
                     import smtplib
@@ -401,23 +485,7 @@ with st.sidebar:
     st.query_params["smtp_port"] = str(smtp_port)
     st.query_params["smtp_email"] = smtp_email
 
-    # Manage Contacts
-    st.divider()
-    with st.expander("👥 Manage Contacts"):
-        with st.form("add_contact_form"):
-            new_name = st.text_input("Name", placeholder="John Doe")
-            new_email = st.text_input("Email", placeholder="john@example.com")
-            submitted = st.form_submit_button("Add Contact")
-            if submitted:
-                if new_name and new_email:
-                    success, msg = contact_manager.add_contact(new_name, new_email)
-                    if success:
-                        st.success(msg)
-                        st.rerun()
-                    else:
-                        st.error(msg)
-                else:
-                    st.warning("Name and Email required.")
+
 
 # Initialize Agent
 if api_key:
@@ -434,48 +502,14 @@ with col1:
 with col2:
     st.title("Auto-Gen email")
 
-st.markdown("Generate and send professional looking emails with Auto-Gen email.")
+st.markdown("Generate and send professional looking emails via Subject line.")
 
 # Input Section
 with st.container():
     st.subheader("Email Details")
-    # Contact Search / Manual Entry
-    use_contacts = st.toggle("Search Contacts", value=True, key="use_contacts_toggle")
-    
-    to_email = ""
-    if use_contacts:
-        contacts = contact_manager.load_contacts()
-        if contacts:
-            # Create options map: "Name <email>" -> email
-            contact_options = {f"{c['name']} <{c['email']}>": c['email'] for c in contacts}
-            
-            # Helper to find index of persisted value if it exists in contacts
-            persisted_to = get_persisted_value("to_email", "")
-            default_index = None
-            
-            # Try to match persisted email to an option
-            for i, email in enumerate(contact_options.values()):
-                if email == persisted_to:
-                    default_index = i
-                    break
-            
-            selected_contact_key = st.selectbox(
-                "Select Recipient", 
-                options=list(contact_options.keys()),
-                index=default_index,
-                placeholder="Type to search...",
-                key="contact_selectbox"
-            )
-            
-            if selected_contact_key:
-                to_email = contact_options[selected_contact_key]
-        else:
-            st.info("No contacts found. Add some in the sidebar settings.")
-            to_val = get_persisted_value("to_email", "")
-            to_email = st.text_input("Recipient Email", value=to_val, placeholder="e.g., boss@company.com", key="to_email_manual_fallback")
-    else:
-        to_val = get_persisted_value("to_email", "")
-        to_email = st.text_input("Recipient Email", value=to_val, placeholder="e.g., boss@company.com", key="to_email_manual")
+    # Recipient Email
+    to_val = get_persisted_value("to_email", "")
+    to_email = st.text_input("Recipient Email", value=to_val, placeholder="e.g., boss@company.com", key="to_email")
     
     # Sync to_email to query params
     if to_email:
@@ -514,7 +548,7 @@ with st.container():
     
     opt_btn_text = "✨ Optimize / Generate Subject" if body_generated else "⚪ Optimize Subject (Generate Body First)"
     
-    if st.button(opt_btn_text, disabled=not body_generated, help="Generate an email body first to enable this feature."):
+    if st.button(opt_btn_text, disabled=not body_generated):
         # Check if there is edited content in the quill editor first
         content_to_optimize = st.session_state.get("quill_editor") or st.session_state.get("generated_email")
         
@@ -535,15 +569,7 @@ with st.container():
         else:
             st.warning("Please enter some content in the Body or a rough Subject first.")
 
-    # Attachments
-    uploaded_files = st.file_uploader("Attachments (Max 10MB per file)", accept_multiple_files=True)
-    valid_attachments = []
-    if uploaded_files:
-        for file in uploaded_files:
-            if file.size > 10 * 1024 * 1024: # 10MB
-                st.error(f"File {file.name} is too large (>10MB).")
-            else:
-                valid_attachments.append(file)
+
 
 # Generation Section
 if st.button("🚀 Generate Email"):
@@ -554,7 +580,7 @@ if st.button("🚀 Generate Email"):
     else:
         with st.spinner("Drafting your email..."):
             # Get list of file names
-            attachment_names = [f.name for f in valid_attachments] if valid_attachments else []
+            attachment_names = [] # Attachments are now added after generation
             
             email_body = st.session_state.agent.generate_email(subject, attachment_names)
             
@@ -582,6 +608,16 @@ if 'generated_email' in st.session_state:
         # Clear error after showing it once
         del st.session_state.validation_error
     
+    # Attachments (Moved here)
+    uploaded_files = st.file_uploader("📎 Attachments (Max 10MB)", accept_multiple_files=True, key="file_uploader")
+    valid_attachments = []
+    if uploaded_files:
+        for file in uploaded_files:
+            if file.size > 10 * 1024 * 1024: # 10MB
+                st.error(f"File {file.name} is too large (>10MB).")
+            else:
+                valid_attachments.append(file)
+
     # Allow user to edit the generated email using WYSIWYG editor
     final_body = st_quill(
         value=st.session_state.generated_email,
